@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --forsythia: #FFC801;
+    --oceanic: #172B36;
+    --nocturnal: #114C5A;
+    --arctic: #F1F6F4;
+    --saffron: #FF9932;
+    --term-bg: #020617;
+    --term-border: #1e293b;
+    --primary-accent: #38bdf8;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --subdued: #e2e8f0;
+    --body-bg: #0f172a;
+  }
+
+  body {
+    background: var(--body-bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--subdued);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 48px;
+    overflow: hidden;
+  }
+
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: var(--term-bg);
+    border-bottom: 1px solid var(--term-border);
+    display: flex;
+    align-items: center;
+    padding: 0 48px;
+    gap: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #475569;
+    z-index: 10;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-item { display: flex; align-items: center; gap: 6px; }
+  .status-item span:first-of-type { color: #334155; }
+  .status-item .val { color: var(--primary-accent); }
+  .status-spacer { flex: 1; }
+  .status-time { color: var(--warning); }
+
+  /* ── HERO CONTENT ── */
+  .hero-content {
+    position: relative;
+    z-index: 5;
+    max-width: 780px;
+    padding-top: 32px;
+  }
+
+  /* ── EYEBROW ── */
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--forsythia);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 28px;
+    height: 1px;
+    background: var(--forsythia);
+  }
+
+  /* ── HEADLINE ── */
+  .headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+    margin-bottom: 10px;
+  }
+
+  .headline .line-accent {
+    color: var(--primary-accent);
+    position: relative;
+    display: inline-block;
+  }
+
+  /* Animated underline that redraws */
+  .headline .line-accent::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    height: 2px;
+    background: var(--primary-accent);
+    width: 0;
+    animation: draw-line 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+  }
+
+  @keyframes draw-line {
+    to { width: 100%; }
+  }
+
+  .headline .line-warn { color: var(--forsythia); }
+
+  /* ── SUBHEAD ── */
+  .subhead {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #64748b;
+    line-height: 1.7;
+    max-width: 540px;
+    margin-bottom: 52px;
+    margin-top: 20px;
+  }
+
+  .subhead code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: rgba(56,189,248,0.08);
+    color: var(--primary-accent);
+    border: 1px solid rgba(56,189,248,0.15);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  /* ── KPI STRIP ── */
+  .kpi-strip {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--term-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 48px;
+    width: fit-content;
+    background: var(--term-bg);
+  }
+
+  .kpi {
+    padding: 16px 28px;
+    border-right: 1px solid var(--term-border);
+    min-width: 190px;
+  }
+  .kpi:last-child { border-right: none; }
+
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #334155;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .kpi-value .unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: #475569;
+    margin-left: 2px;
+  }
+
+  .kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--success);
+    margin-top: 4px;
+  }
+
+  .kpi-active .kpi-value { color: var(--forsythia); }
+  .kpi-savings .kpi-value { color: var(--success); }
+
+  /* ── SVG ORBIT ELEMENT ── */
+  .svg-container {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 420px;
+    height: 420px;
+    opacity: 0.85;
+  }
+
+  @keyframes orbit-outer {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes orbit-inner {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
+  }
+
+  @keyframes orbit-dot {
+    from { transform: rotate(0deg) translateX(140px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(140px) rotate(-360deg); }
+  }
+
+  @keyframes orbit-dot-inner {
+    from { transform: rotate(120deg) translateX(80px) rotate(-120deg); }
+    to   { transform: rotate(480deg) translateX(80px) rotate(-480deg); }
+  }
+
+  @keyframes orbit-dot-inner2 {
+    from { transform: rotate(270deg) translateX(80px) rotate(-270deg); }
+    to   { transform: rotate(630deg) translateX(80px) rotate(-630deg); }
+  }
+
+  @keyframes core-pulse {
+    0%, 100% { r: 18; opacity: 1; }
+    50%       { r: 22; opacity: 0.7; }
+  }
+
+  @keyframes tick-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  @keyframes data-flow {
+    0%   { stroke-dashoffset: 200; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-content { animation: fade-in-up 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+  .kpi-strip    { animation: fade-in-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s both; }
+  .cta-row      { animation: fade-in-up 0.7s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+
+  /* ── CTA ROW ── */
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  /* The CTA: a terminal command block */
+  .cta-terminal {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid rgba(255,200,1,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    background: rgba(255,200,1,0.04);
+  }
+
+  .cta-terminal:hover {
+    border-color: var(--forsythia);
+    box-shadow: 0 0 24px rgba(255,200,1,0.12);
+  }
+
+  .cta-terminal:hover .cta-arrow {
+    transform: translateX(3px);
+  }
+
+  .cta-prompt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--forsythia);
+    padding: 13px 14px;
+    border-right: 1px solid rgba(255,200,1,0.2);
+    background: rgba(255,200,1,0.06);
+    user-select: none;
+  }
+
+  .cta-cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: #f8fafc;
+    padding: 13px 18px;
+    letter-spacing: 0.01em;
+  }
+
+  .cta-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--forsythia);
+    vertical-align: middle;
+    margin-left: 2px;
+    animation: tick-blink 1s step-end infinite;
+  }
+
+  .cta-arrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--forsythia);
+    padding: 13px 16px 13px 4px;
+    transition: transform 0.2s;
+    user-select: none;
+  }
+
+  /* Secondary link */
+  .cta-secondary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #475569;
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: color 0.2s;
+    border: none;
+    background: none;
+  }
+
+  .cta-secondary:hover { color: var(--primary-accent); }
+  .cta-secondary::before {
+    content: '//';
+    color: #1e293b;
+    font-size: 13px;
+  }
+
+  /* ── BOTTOM TAPE ── */
+  .bottom-tape {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: var(--term-bg);
+    border-top: 1px solid var(--term-border);
+    display: flex;
+    align-items: center;
+    padding: 0 48px;
+    gap: 32px;
+    overflow: hidden;
+  }
+
+  .tape-ticker {
+    display: flex;
+    gap: 48px;
+    animation: scroll-ticker 18s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes scroll-ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .tape-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tape-item .t-key { color: #475569; }
+  .tape-item .t-val { color: var(--primary-accent); }
+  .tape-item .t-sep { color: #1e293b; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<section class="hero" aria-label="Enterprise RPA Control Terminal hero section">
+
+  <!-- Scanline grid -->
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <!-- Top status bar -->
+  <div class="status-bar" aria-hidden="true">
+    <div class="status-item">
+      <div class="status-dot"></div>
+      <span>STREAM</span>
+      <span class="val">LIVE</span>
+    </div>
+    <div class="status-item">
+      <span>NODE</span>
+      <span class="val">rpa-db-2026.global</span>
+    </div>
+    <div class="status-item">
+      <span>LATENCY</span>
+      <span class="val" id="latency">4ms</span>
+    </div>
+    <div class="status-item">
+      <span>TICK</span>
+      <span class="val">200ms</span>
+    </div>
+    <div class="status-spacer"></div>
+    <span class="status-time" id="clock"></span>
+  </div>
+
+  <!-- Animated SVG element -->
+  <div class="svg-container" aria-hidden="true">
+    <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <defs>
+        <filter id="glow-sky">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-gold">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Outer ring -->
+      <circle cx="210" cy="210" r="160" stroke="#1e293b" stroke-width="1"/>
+      <!-- Dashed guide ring -->
+      <circle cx="210" cy="210" r="140" stroke="rgba(56,189,248,0.08)" stroke-width="1" stroke-dasharray="4 6"/>
+      <!-- Inner ring -->
+      <circle cx="210" cy="210" r="90" stroke="#1e293b" stroke-width="1"/>
+      <circle cx="210" cy="210" r="80" stroke="rgba(56,189,248,0.06)" stroke-width="1" stroke-dasharray="3 8"/>
+
+      <!-- Outer orbit arm -->
+      <g style="transform-origin:210px 210px; animation: orbit-outer 12s linear infinite;">
+        <!-- Orbit dot: forsythia -->
+        <circle cx="350" cy="210" r="6" fill="#FFC801" filter="url(#glow-gold)" opacity="0.9"/>
+        <circle cx="350" cy="210" r="3" fill="#fff"/>
+        <!-- Trail tick marks on outer ring -->
+        <line x1="370" y1="210" x2="376" y2="210" stroke="#FFC801" stroke-width="1.5" opacity="0.4"/>
+      </g>
+
+      <!-- Second outer dot, offset 180deg -->
+      <g style="transform-origin:210px 210px; animation: orbit-outer 12s linear infinite; animation-delay:-6s;">
+        <circle cx="350" cy="210" r="4" fill="rgba(255,200,1,0.25)"/>
+        <circle cx="350" cy="210" r="2" fill="rgba(255,200,1,0.5)"/>
+      </g>
+
+      <!-- Inner orbit arm: sky-blue -->
+      <g style="transform-origin:210px 210px; animation: orbit-inner 7s linear infinite;">
+        <circle cx="290" cy="210" r="5" fill="#38bdf8" filter="url(#glow-sky)" opacity="0.95"/>
+        <circle cx="290" cy="210" r="2.5" fill="#fff"/>
+      </g>
+
+      <!-- Third inner dot, offset -->
+      <g style="transform-origin:210px 210px; animation: orbit-inner 7s linear infinite; animation-delay:-2.3s;">
+        <circle cx="290" cy="210" r="3" fill="rgba(56,189,248,0.3)"/>
+      </g>
+
+      <!-- Data flow arcs (dashes moving along ring) -->
+      <circle cx="210" cy="210" r="140" stroke="#38bdf8" stroke-width="1.5"
+        stroke-dasharray="30 280"
+        stroke-dashoffset="0"
+        opacity="0.25"
+        style="transform-origin:210px 210px; animation: orbit-outer 4s linear infinite;"/>
+
+      <circle cx="210" cy="210" r="140" stroke="#FFC801" stroke-width="1"
+        stroke-dasharray="14 296"
+        stroke-dashoffset="0"
+        opacity="0.35"
+        style="transform-origin:210px 210px; animation: orbit-outer 4s linear infinite; animation-delay:-1.3s;"/>
+
+      <!-- Core -->
+      <circle cx="210" cy="210" r="36" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+      <circle cx="210" cy="210" r="22" fill="#0f172a" stroke="rgba(56,189,248,0.3)" stroke-width="1"/>
+      <!-- Animated core pulse ring -->
+      <circle cx="210" cy="210" fill="none" stroke="rgba(56,189,248,0.5)" stroke-width="1.5"
+        style="animation: core-pulse 2.4s ease-in-out infinite; transform-origin:210px 210px; r:18;"/>
+
+      <!-- Core crosshair -->
+      <line x1="210" y1="196" x2="210" y2="224" stroke="rgba(56,189,248,0.5)" stroke-width="0.75"/>
+      <line x1="196" y1="210" x2="224" y2="210" stroke="rgba(56,189,248,0.5)" stroke-width="0.75"/>
+      <circle cx="210" cy="210" r="2.5" fill="#38bdf8" opacity="0.9"/>
+
+      <!-- Corner tick marks on outer ring -->
+      <line x1="210" y1="48" x2="210" y2="56" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="210" y1="364" x2="210" y2="372" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="48" y1="210" x2="56" y2="210" stroke="#1e293b" stroke-width="1.5"/>
+      <line x1="364" y1="210" x2="372" y2="210" stroke="#1e293b" stroke-width="1.5"/>
+
+      <!-- Small node markers on outer ring at 45deg positions -->
+      <circle cx="323" cy="97" r="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="97" cy="323" r="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="97" cy="97" r="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="323" cy="323" r="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+
+      <!-- Labels -->
+      <text x="216" y="197" font-family="'JetBrains Mono',monospace" font-size="9" fill="#475569" letter-spacing="0.08em">RPA</text>
+      <text x="208" y="223" font-family="'JetBrains Mono',monospace" font-size="9" fill="#475569" letter-spacing="0.06em">2026</text>
+    </svg>
+  </div>
+
+  <!-- Main content -->
+  <div class="hero-content">
+    <p class="eyebrow">Worldwide RPA Database 2026</p>
+
+    <h1 class="headline">
+      <span class="line-accent">Control.</span><br>
+      Every robot.<br>
+      <span class="line-warn">Every millisecond.</span>
+    </h1>
+
+    <p class="subhead">
+      Enterprise telemetry terminal for operators running global RPA infrastructure.
+      Stream <code>500+ live rows</code>, sort multi-column, filter by department —
+      at locked 60 FPS with zero dropped records.
+    </p>
+
+    <!-- KPI strip -->
+    <div class="kpi-strip" role="region" aria-label="Live key performance metrics">
+      <div class="kpi">
+        <div class="kpi-label">Rows Processed</div>
+        <div class="kpi-value" id="kpi-rows">0<span class="unit">M</span></div>
+        <div class="kpi-delta" id="kpi-rows-delta">▲ +0 / tick</div>
+      </div>
+      <div class="kpi kpi-active">
+        <div class="kpi-label">Robots Deployed</div>
+        <div class="kpi-value" id="kpi-robots">0<span class="unit">K</span></div>
+        <div class="kpi-delta">▲ live stream</div>
+      </div>
+      <div class="kpi kpi-savings">
+        <div class="kpi-label">Cumulative Savings</div>
+        <div class="kpi-value" id="kpi-savings">$0<span class="unit">B</span></div>
+        <div class="kpi-delta" id="kpi-save-delta">▲ +$0 / sec</div>
+      </div>
+    </div>
+
+    <!-- CTA row -->
+    <div class="cta-row">
+      <div class="cta-terminal" role="button" tabindex="0" aria-label="Launch terminal">
+        <span class="cta-prompt">$</span>
+        <span class="cta-cmd">./launch-terminal<span class="cta-cursor" aria-hidden="true"></span></span>
+        <span class="cta-arrow" aria-hidden="true">→</span>
+      </div>
+
+      <button class="cta-secondary" aria-label="View architecture documentation">
+        view architecture
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom status tape -->
+  <div class="bottom-tape" aria-hidden="true">
+    <div class="tape-ticker">
+      <span class="tape-item"><span class="t-key">DEPT</span><span class="t-sep">│</span><span class="t-val">Finance</span></span>
+      <span class="tape-item"><span class="t-key">STATUS</span><span class="t-sep">│</span><span class="t-val">ACTIVE</span></span>
+      <span class="tape-item"><span class="t-key">ROI</span><span class="t-sep">│</span><span class="t-val">+312.45%</span></span>
+      <span class="tape-item"><span class="t-key">PARTNER</span><span class="t-sep">│</span><span class="t-val">Deloitte</span></span>
+      <span class="tape-item"><span class="t-key">COUNTRY</span><span class="t-sep">│</span><span class="t-val">IN</span></span>
+      <span class="tape-item"><span class="t-key">TYPE</span><span class="t-sep">│</span><span class="t-val">Cloud</span></span>
+      <span class="tape-item"><span class="t-key">DEPT</span><span class="t-sep">│</span><span class="t-val">HR</span></span>
+      <span class="tape-item"><span class="t-key">STATUS</span><span class="t-sep">│</span><span class="t-val">COMPLETED</span></span>
+      <span class="tape-item"><span class="t-key">ROI</span><span class="t-sep">│</span><span class="t-val">+189.20%</span></span>
+      <span class="tape-item"><span class="t-key">PARTNER</span><span class="t-sep">│</span><span class="t-val">Accenture</span></span>
+      <span class="tape-item"><span class="t-key">COUNTRY</span><span class="t-sep">│</span><span class="t-val">US</span></span>
+      <span class="tape-item"><span class="t-key">SAVED</span><span class="t-sep">│</span><span class="t-val">$2.4M</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="tape-item"><span class="t-key">DEPT</span><span class="t-sep">│</span><span class="t-val">Finance</span></span>
+      <span class="tape-item"><span class="t-key">STATUS</span><span class="t-sep">│</span><span class="t-val">ACTIVE</span></span>
+      <span class="tape-item"><span class="t-key">ROI</span><span class="t-sep">│</span><span class="t-val">+312.45%</span></span>
+      <span class="tape-item"><span class="t-key">PARTNER</span><span class="t-sep">│</span><span class="t-val">Deloitte</span></span>
+      <span class="tape-item"><span class="t-key">COUNTRY</span><span class="t-sep">│</span><span class="t-val">IN</span></span>
+      <span class="tape-item"><span class="t-key">TYPE</span><span class="t-sep">│</span><span class="t-val">Cloud</span></span>
+      <span class="tape-item"><span class="t-key">DEPT</span><span class="t-sep">│</span><span class="t-val">HR</span></span>
+      <span class="tape-item"><span class="t-key">STATUS</span><span class="t-sep">│</span><span class="t-val">COMPLETED</span></span>
+      <span class="tape-item"><span class="t-key">ROI</span><span class="t-sep">│</span><span class="t-val">+189.20%</span></span>
+      <span class="tape-item"><span class="t-key">PARTNER</span><span class="t-sep">│</span><span class="t-val">Accenture</span></span>
+      <span class="tape-item"><span class="t-key">COUNTRY</span><span class="t-sep">│</span><span class="t-val">US</span></span>
+      <span class="tape-item"><span class="t-key">SAVED</span><span class="t-sep">│</span><span class="t-val">$2.4M</span></span>
+    </div>
+  </div>
+
+</section>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getUTCHours()).padStart(2,'0');
+    const m = String(now.getUTCMinutes()).padStart(2,'0');
+    const s = String(now.getUTCSeconds()).padStart(2,'0');
+    const el = document.getElementById('clock');
+    if (el) el.textContent = `UTC ${h}:${m}:${s}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Latency jitter
+  setInterval(() => {
+    const el = document.getElementById('latency');
+    if (el) el.textContent = (Math.floor(Math.random()*6)+2) + 'ms';
+  }, 800);
+
+  // KPI counters — isolated, no shared state, direct DOM writes
+  let rows = 847.3;
+  let robots = 142.6;
+  let savings = 94.2;
+
+  const rowsEl   = document.getElementById('kpi-rows');
+  const robotsEl = document.getElementById('kpi-robots');
+  const savingsEl = document.getElementById('kpi-savings');
+  const rowsDelta = document.getElementById('kpi-rows-delta');
+  const saveDelta = document.getElementById('kpi-save-delta');
+
+  // Format helpers
+  function fmtRows(v)    { return v.toFixed(1); }
+  function fmtRobots(v)  { return v.toFixed(1); }
+  function fmtSave(v)    { return '$' + v.toFixed(1); }
+
+  setInterval(() => {
+    const rInc = +(Math.random()*0.08+0.02).toFixed(2);
+    const botInc = +(Math.random()*0.04+0.01).toFixed(2);
+    const sInc = +(Math.random()*0.03+0.01).toFixed(2);
+
+    rows    += rInc;
+    robots  += botInc;
+    savings += sInc;
+
+    if (rowsEl)   { rowsEl.firstChild.nodeValue   = fmtRows(rows); }
+    if (robotsEl) { robotsEl.firstChild.nodeValue = fmtRobots(robots); }
+    if (savingsEl){ savingsEl.firstChild.nodeValue = fmtSave(savings); }
+    if (rowsDelta){ rowsDelta.textContent = '▲ +' + rInc.toFixed(2) + 'M / tick'; }
+    if (saveDelta){ saveDelta.textContent = '▲ +$' + sInc.toFixed(2) + 'B / sec'; }
+  }, 200);
+</script>
+</body>
+</html>
