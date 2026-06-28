@@ -58,13 +58,42 @@ export default function App() {
   const [frozenRows, setFrozenRows]       = useState([]);
   const [pausedAt, setPausedAt]           = useState(null);
 
+  const [infraState, setInfraState] = useState({
+    streamIngestion: true,
+    alertDispatch: true,
+    auditLogging: false,
+    coldArchival: false,
+    failoverReplica: true,
+  });
+
+  const toggleInfra = useCallback((key) => {
+    setInfraState(p => ({ ...p, [key]: !p[key] }));
+  }, []);
+
   const lastTickDurationRef = useRef(0);
   const gridRef             = useRef(null);
 
   const pipeline    = usePipeline(lastTickDurationRef);
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
-  const { injectBurst } = useStream(buffer.ingest);
+
+  const handleIngest = useCallback((chunk, isBaseline) => {
+    if (!infraState.streamIngestion && !isBaseline) return;
+    
+    let processed = chunk;
+    if (!infraState.failoverReplica && !isBaseline) {
+      // Simulate 10% packet loss on failover drop
+      processed = chunk.filter(() => Math.random() > 0.1);
+    }
+    
+    if (infraState.auditLogging && !isBaseline) {
+      console.log(`[AUDIT LOG] Ingested ${processed.length} rows at ${new Date().toISOString()}`);
+    }
+    
+    buffer.ingest(processed, isBaseline);
+  }, [infraState, buffer]);
+
+  const { injectBurst } = useStream(handleIngest);
 
   // Wait for RPAStream baseline to be ready before rendering grid
   useEffect(() => {
@@ -223,11 +252,12 @@ export default function App() {
             />
             <div style={{flex:1,overflow:'hidden'}}>
               <VirtualGrid
-                gridRef={gridRef}
                 rows={pipeline.view}
                 sortConfig={pipeline.sortConfig}
                 onSort={handleSort}
                 isReplaying={pipeline.isReplaying}
+                gridRef={gridRef}
+                coldArchival={infraState.coldArchival}
               />
             </div>
           </div>
@@ -243,14 +273,14 @@ export default function App() {
           )}
           {layout.infraToggles && (
             <WorkspacePanel title="Infrastructure" style={{flexShrink:0}}>
-              <InfraToggles />
+              <InfraToggles infraState={infraState} toggleInfra={toggleInfra} />
             </WorkspacePanel>
           )}
         </div>
       </div>
 
       {/* ── ANOMALY TRAY ── */}
-      <AnomalyTray anomalies={pipeline.anomalies} />
+      <AnomalyTray anomalies={infraState.alertDispatch ? pipeline.anomalies : []} />
 
       {/* ── REPLAY BAR ── */}
       {layout.replayBar && (

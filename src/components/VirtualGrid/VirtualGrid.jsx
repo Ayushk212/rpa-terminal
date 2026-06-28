@@ -63,7 +63,7 @@ function flashClass(row) {
   return '';
 }
 
-export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) {
+export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, coldArchival }) {
   const containerRef  = useRef(null);
   const scrollRef     = useRef(null);
   const rowNodesRef   = useRef([]);
@@ -289,7 +289,10 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) 
         flexShrink: 0, display: 'flex', gap: '16px',
       }}>
         <span style={{ color: '#334155' }}>{rows.length.toLocaleString()} rows</span>
-        <span>DOM pool: {poolSizeRef.current} nodes</span>
+        <span>
+          DOM pool: {poolSizeRef.current} nodes
+          {coldArchival && <span style={{ color: '#38bdf8', marginLeft: '6px' }}>• ARCHIVING...</span>}
+        </span>
         <span>cols: {COLUMNS.length}</span>
         {isReplaying && <span style={{ color: '#fbbf24' }}>REPLAY MODE</span>}
       </div>

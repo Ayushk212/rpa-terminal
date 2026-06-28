@@ -51,26 +51,33 @@ export function LayoutControls({ layout, togglePanel }) {
   );
 }
 
-export function InfraToggles() {
+export function InfraToggles({ infraState, toggleInfra }) {
   const items = [
-    { label: 'STREAM INGESTION', on: true,  color: '#4ade80' },
-    { label: 'ALERT DISPATCH',   on: true,  color: '#fbbf24' },
-    { label: 'AUDIT LOGGING',    on: false, color: '#38bdf8' },
-    { label: 'COLD ARCHIVAL',    on: false, color: '#64748b' },
-    { label: 'FAILOVER REPLICA', on: true,  color: '#FFC801' },
+    { key: 'streamIngestion', label: 'STREAM INGESTION', color: '#4ade80' },
+    { key: 'alertDispatch',   label: 'ALERT DISPATCH',   color: '#fbbf24' },
+    { key: 'auditLogging',    label: 'AUDIT LOGGING',    color: '#38bdf8' },
+    { key: 'coldArchival',    label: 'COLD ARCHIVAL',    color: '#64748b' },
+    { key: 'failoverReplica', label: 'FAILOVER REPLICA', color: '#FFC801' },
   ];
+
+  if (!infraState) return null;
 
   return (
     <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-      {items.map(item => <InfraToggle key={item.label} {...item} />)}
+      {items.map(item => (
+        <InfraToggle 
+          key={item.key} 
+          label={item.label} 
+          color={item.color} 
+          on={infraState[item.key]} 
+          onToggle={() => toggleInfra(item.key)} 
+        />
+      ))}
     </div>
   );
 }
 
-function InfraToggle({ label, on, color }) {
-  // Use React state so toggle is live
-  const [checked, setChecked] = React.useState(on);
-
+function InfraToggle({ label, on, color, onToggle }) {
   return (
     <label style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -84,11 +91,11 @@ function InfraToggle({ label, on, color }) {
         {label}
       </span>
       <div
-        onClick={() => setChecked(c => !c)}
+        onClick={onToggle}
         style={{
           position: 'relative', width: '28px', height: '14px',
           borderRadius: '7px',
-          background: checked ? color : '#1e293b',
+          background: on ? color : '#1e293b',
           border: '1px solid rgba(255,255,255,0.08)',
           transition: 'background 0.2s',
           cursor: 'pointer',
@@ -97,9 +104,9 @@ function InfraToggle({ label, on, color }) {
       >
         <div style={{
           position: 'absolute', top: '2px',
-          left: checked ? '14px' : '2px',
+          left: on ? '14px' : '2px',
           width: '10px', height: '10px', borderRadius: '50%',
-          background: checked ? '#fff' : '#475569',
+          background: on ? '#fff' : '#475569',
           transition: 'left 0.15s, background 0.2s',
         }} />
       </div>
