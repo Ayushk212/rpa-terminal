@@ -174,8 +174,10 @@ function ChartPanel({ title, subtitle, children }) {
           </span>
         )}
       </div>
-      <div style={{ flex: 1, padding: '12px', position: 'relative', minHeight: 0 }}>
-        {children}
+      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+        <div style={{ position: 'absolute', inset: '12px' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
