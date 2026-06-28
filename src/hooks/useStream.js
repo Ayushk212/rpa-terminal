@@ -17,23 +17,32 @@ export function useStream(onChunk) {
       return;
     }
 
-    // Baseline load
-    const baseline = rpa.getBaseline();
-    if (typeof onChunkRef.current === 'function') {
-      onChunkRef.current(baseline, true);
-    }
+    let unsub = null;
 
-    // Live tick subscription
-    const unsub = rpa.subscribe((rows) => {
-      if (typeof onChunkRef.current === 'function') {
-        onChunkRef.current(rows, false);
+    (async () => {
+      // Wait for CSV baseline to load
+      if (rpa.init) {
+        await rpa.init();
       }
-    });
 
-    rpa.start();
+      // Baseline load
+      const baseline = rpa.getBaseline();
+      if (typeof onChunkRef.current === 'function') {
+        onChunkRef.current(baseline, true);
+      }
+
+      // Live tick subscription
+      unsub = rpa.subscribe((rows) => {
+        if (typeof onChunkRef.current === 'function') {
+          onChunkRef.current(rows, false);
+        }
+      });
+
+      rpa.start();
+    })();
 
     return () => {
-      unsub();
+      if (unsub) unsub();
       rpa.stop();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

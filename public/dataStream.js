@@ -1,84 +1,84 @@
 // dataStream.js — RPA Telemetry Stream Simulator
-// Loads static CSV baseline, then injects anomalies every 200ms
+// Loads static CSV baseline from automation_projects.csv, then injects anomalies every 200ms
 
 (function(global) {
   const TICK_MS = 200;
 
-  const DEPARTMENTS   = ['Finance','HR','Operations','IT','Legal','Supply Chain','Marketing','Procurement'];
-  const INDUSTRIES    = ['Banking','Healthcare','Manufacturing','Retail','Insurance','Telecom','Energy','Logistics'];
-  const AUTO_TYPES    = ['Cloud','On-Premise','Hybrid','SaaS','Edge'];
-  const STATUSES      = ['Active','Completed','Failed','Pending','On Hold'];
-  const PARTNERS      = ['Deloitte','Accenture','Wipro','TCS','Infosys','Capgemini','IBM','EY'];
-  const COUNTRIES     = ['US','IN','DE','GB','JP','SG','AU','FR','BR','CA'];
-  const COMPANIES     = ['TechCorp','GlobalBank','MediSys','RetailGiant','InsurePlus','TeleLink','EnergyPro','LogiFlow',
-                          'DataStream Inc','FinTrust','CloudNative','AutoBot Ltd','ProcessAI','RoboWorks'];
-
-  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  function randFloat(min, max, dec=2) { return +(Math.random()*(max-min)+min).toFixed(dec); }
   function randInt(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
-  function uid() { return 'RPA-' + Math.random().toString(36).slice(2,8).toUpperCase(); }
+  function randFloat(min, max, dec=2) { return +(Math.random()*(max-min)+min).toFixed(dec); }
 
-  function generateRow(id) {
-    const status = rand(STATUSES);
-    const roi    = status === 'Failed' ? randFloat(-40, -0.5) : randFloat(10, 800);
-    return {
-      id:                  id || uid(),
-      project_name:        rand(COMPANIES) + ' ' + rand(AUTO_TYPES) + ' Automation',
-      company_id:          'CO-' + randInt(1000,9999),
-      department:          rand(DEPARTMENTS),
-      industry:            rand(INDUSTRIES),
-      automation_type:     rand(AUTO_TYPES),
-      implementation_partner: rand(PARTNERS),
-      country:             rand(COUNTRIES),
-      status:              status,
-      budget:              randInt(50000, 5000000),
-      roi_percent:         roi,
-      employee_hours_saved: randInt(200, 50000),
-      cumulative_savings:  randInt(10000, 2000000),
-      active_robots:       randInt(1, 500),
-      error_rate:          randFloat(0, 15),
-      uptime_percent:      randFloat(85, 99.99),
-      last_updated:        Date.now(),
-      _isNew:              true,
-    };
-  }
-
-  // Generate baseline of 500 rows
-  const baseline = [];
-  for (let i = 0; i < 500; i++) baseline.push(generateRow());
-
+  let baseline = [];
   let listeners = [];
   let intervalId = null;
   let running = false;
+  let initPromise = null;
+
+  async function initialize() {
+    if (initPromise) return initPromise;
+    initPromise = fetch('/automation_projects.csv')
+      .then(res => res.text())
+      .then(text => {
+        const lines = text.trim().split('\n');
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          if (parts.length < 18) continue;
+          baseline.push({
+            id: parts[0],
+            company_id: parts[1],
+            project_name: parts[2],
+            status: parts[5],
+            automation_type: parts[6],
+            active_robots: parseInt(parts[7], 10) || 0,
+            budget: parseFloat(parts[8]) || 0,
+            cumulative_savings: parseFloat(parts[9]) || 0,
+            roi_percent: parseFloat(parts[10]) || 0,
+            department: parts[11],
+            implementation_partner: parts[12],
+            country: parts[13],
+            industry: parts[14],
+            employee_hours_saved: parseInt(parts[15], 10) || 0,
+            error_rate: randFloat(0, 5),
+            uptime_percent: randFloat(95, 100),
+            last_updated: Date.now(),
+            _isNew: true
+          });
+        }
+      });
+    return initPromise;
+  }
 
   function emit(rows) {
     listeners.forEach(fn => { try { fn(rows); } catch(e) {} });
   }
 
   function tick() {
-    // Inject 3–8 new/mutated rows per tick
+    // Inject 3–8 mutated rows per tick from the loaded baseline
     const count = randInt(3, 8);
     const updates = [];
     for (let i = 0; i < count; i++) {
-      const mutate = Math.random() > 0.4 && baseline.length > 0;
-      if (mutate) {
+      if (baseline.length > 0) {
         const idx = randInt(0, baseline.length - 1);
-        const updated = generateRow(baseline[idx].id);
+        const updated = { ...baseline[idx] };
+        
+        // Mutate slightly
+        updated.error_rate = randFloat(0, 15);
+        updated.uptime_percent = randFloat(85, 99.99);
+        if (Math.random() > 0.8) updated.status = 'Failed';
+        updated.last_updated = Date.now();
         updated._isNew = false;
         updated._isMutated = true;
+        
         baseline[idx] = updated;
         updates.push(updated);
-      } else {
-        const newRow = generateRow();
-        baseline.push(newRow);
-        if (baseline.length > 800) baseline.shift();
-        updates.push(newRow);
       }
     }
-    emit(updates);
+    if (updates.length > 0) {
+      emit(updates);
+    }
   }
 
   global.RPAStream = {
+    init: initialize,
     getBaseline() { return [...baseline]; },
     subscribe(fn) {
       listeners.push(fn);
