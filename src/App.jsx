@@ -18,6 +18,7 @@ import { Hero }             from './components/Hero/Hero';
 import { WorkspacePanel, LayoutControls, InfraToggles } from './components/WorkspacePanel/WorkspacePanel';
 
 import { buildSortConfig }  from './lib/sorter';
+import { AnalyticsOverlay } from './components/AnalyticsOverlay/AnalyticsOverlay';
 
 
 function Clock() {
@@ -52,8 +53,12 @@ function LatencyBadge() {
 }
 
 export default function App() {
-  const [showHero,    setShowHero]    = useState(true);
+  const [showHero,    setShowHero]    = useState(() => localStorage.getItem('hideHero') !== 'true');
   const [dataReady,   setDataReady]   = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [frozenRows, setFrozenRows]       = useState([]);
+  const [pausedAt, setPausedAt]           = useState(null);
+
   const pipeline    = usePipeline();
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
@@ -68,6 +73,20 @@ export default function App() {
     else              { setDataReady(true); } // old fallback
   }, []);
 
+  // When paused toggled off, close analytics automatically
+  useEffect(() => {
+    if (!buffer.paused) setAnalyticsOpen(false);
+  }, [buffer.paused]);
+
+  const handleAnalyticsToggle = useCallback(() => {
+    if (!analyticsOpen) {
+      // Capture frozen snapshot at this exact moment
+      setFrozenRows([...pipeline.view]);
+      setPausedAt(Date.now());
+    }
+    setAnalyticsOpen(o => !o);
+  }, [analyticsOpen, pipeline.view]);
+
   const handleSort = useCallback((key, shiftHeld) => {
     pipeline.setSort(buildSortConfig(pipeline.sortConfig, key, shiftHeld));
   }, [pipeline]);
@@ -76,7 +95,10 @@ export default function App() {
     pipeline.setFilters(typeof updater === 'function' ? updater(pipeline.filters) : updater);
   }, [pipeline]);
 
-  if (showHero) return <Hero onEnter={() => setShowHero(false)} />;
+  if (showHero) return <Hero onEnter={() => {
+    localStorage.setItem('hideHero', 'true');
+    setShowHero(false);
+  }} />;
 
   // Loading screen while 50k rows are being generated in dataStream.js
   if (!dataReady) return (
@@ -143,7 +165,13 @@ export default function App() {
 
         <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
           <LayoutControls layout={layout} togglePanel={togglePanel} />
-          <PipelineControl paused={buffer.paused} onToggle={buffer.toggle} queueLength={buffer.queueLength} />
+          <PipelineControl
+            paused={buffer.paused}
+            onToggle={buffer.toggle}
+            queueLength={buffer.queueLength}
+            onAnalytics={handleAnalyticsToggle}
+            analyticsOpen={analyticsOpen}
+          />
           <Clock />
         </div>
       </div>
@@ -211,6 +239,15 @@ export default function App() {
           replayIdx={pipeline.replayIdx}
           onSeek={pipeline.seekReplay}
           isReplaying={pipeline.isReplaying}
+        />
+      )}
+
+      {/* ── ANALYTICS OVERLAY — only when paused + toggled ── */}
+      {buffer.paused && analyticsOpen && frozenRows.length > 0 && (
+        <AnalyticsOverlay
+          frozenRows={frozenRows}
+          onClose={() => setAnalyticsOpen(false)}
+          pausedAt={pausedAt}
         />
       )}
 

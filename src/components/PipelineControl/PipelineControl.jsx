@@ -1,17 +1,13 @@
-// PipelineControl — Feature 5: Global Pause/Play with queue status overlay
+// PipelineControl — Feature 5: Pause/Play + Analytics View toggle
 
 import { useEffect, useRef, useState } from 'react';
 
-export function PipelineControl({ paused, onToggle, queueLength }) {
-  const [qLen, setQLen] = useState(0);
+export function PipelineControl({ paused, onToggle, queueLength, onAnalytics, analyticsOpen }) {
+  const [qLen, setQLen]               = useState(0);
   const [reconnecting, setReconnecting] = useState(false);
 
-  // Poll queue length when paused
   useEffect(() => {
-    if (!paused) {
-      setQLen(0);
-      return;
-    }
+    if (!paused) { setQLen(0); return; }
     const id = setInterval(() => setQLen(queueLength()), 300);
     return () => clearInterval(id);
   }, [paused, queueLength]);
@@ -24,37 +20,102 @@ export function PipelineControl({ paused, onToggle, queueLength }) {
     onToggle();
   };
 
+  const btn = (label, onClick, active, accentColor) => ({
+    onClick,
+    style: {
+      display: 'flex', alignItems: 'center', gap: '5px',
+      fontFamily: '"JetBrains Mono",monospace', fontSize: '10px',
+      letterSpacing: '0.06em',
+      padding: '4px 10px',
+      border: `1px solid ${active ? accentColor + '80' : '#1e293b'}`,
+      borderRadius: '2px',
+      background: active ? accentColor + '0f' : 'transparent',
+      color: active ? accentColor : '#475569',
+      cursor: 'pointer',
+      transition: 'all 0.15s',
+      whiteSpace: 'nowrap',
+    },
+  });
+
   return (
-    <div className="flex items-center gap-3">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+
+      {/* Queue count badge */}
       {paused && qLen > 0 && (
-        <div className="font-mono text-[9px] text-warning bg-yellow-950/40 border border-yellow-900/40 px-2 py-0.5 rounded">
+        <span style={{
+          fontFamily: '"JetBrains Mono",monospace', fontSize: '9px',
+          color: '#fbbf24',
+          background: 'rgba(120,80,0,0.25)',
+          border: '1px solid rgba(120,80,0,0.4)',
+          padding: '2px 6px', borderRadius: '2px',
+        }}>
           {qLen} queued
-        </div>
+        </span>
       )}
 
       {reconnecting && (
-        <div className="font-mono text-[9px] text-sky reconnect-blink">
+        <span style={{
+          fontFamily: '"JetBrains Mono",monospace', fontSize: '9px',
+          color: '#38bdf8', animation: 'reconnect-blink 0.4s ease-in-out 3',
+        }}>
           RECONNECTING...
-        </div>
+        </span>
       )}
 
+      {/* Analytics View button — only visible when paused */}
+      {paused && (
+        <button
+          {...btn('ANALYTICS', onAnalytics, analyticsOpen, '#FFC801')}
+          aria-pressed={analyticsOpen}
+          aria-label="Toggle analytics overlay"
+          onMouseEnter={e => {
+            if (!analyticsOpen) {
+              e.currentTarget.style.borderColor = '#FFC80180';
+              e.currentTarget.style.color = '#FFC801';
+            }
+          }}
+          onMouseLeave={e => {
+            if (!analyticsOpen) {
+              e.currentTarget.style.borderColor = '#1e293b';
+              e.currentTarget.style.color = '#475569';
+            }
+          }}
+        >
+          <span>◈</span> ANALYTICS
+        </button>
+      )}
+
+      {/* Pause / Resume button */}
       <button
         onClick={handleToggle}
-        className={`
-          flex items-center gap-1.5 font-mono text-[10px] px-3 py-1.5
-          border rounded transition-colors duration-150
-          ${paused
-            ? 'border-forsythia text-forsythia bg-forsythia/5 hover:bg-forsythia/10'
-            : 'border-term-border text-slate-400 hover:border-slate-500 hover:text-subdued'
-          }
-        `}
         aria-label={paused ? 'Resume stream' : 'Pause stream'}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '5px',
+          fontFamily: '"JetBrains Mono",monospace', fontSize: '10px',
+          letterSpacing: '0.06em',
+          padding: '4px 10px',
+          border: `1px solid ${paused ? '#FFC80180' : '#1e293b'}`,
+          borderRadius: '2px',
+          background: paused ? '#FFC8010a' : 'transparent',
+          color: paused ? '#FFC801' : '#475569',
+          cursor: 'pointer',
+          transition: 'all 0.15s',
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={e => {
+          if (!paused) {
+            e.currentTarget.style.borderColor = '#334155';
+            e.currentTarget.style.color = '#e2e8f0';
+          }
+        }}
+        onMouseLeave={e => {
+          if (!paused) {
+            e.currentTarget.style.borderColor = '#1e293b';
+            e.currentTarget.style.color = '#475569';
+          }
+        }}
       >
-        {paused ? (
-          <><span>▶</span> RESUME</>
-        ) : (
-          <><span>⏸</span> PAUSE</>
-        )}
+        {paused ? <><span>▶</span> RESUME</> : <><span>⏸</span> PAUSE</>}
       </button>
     </div>
   );
