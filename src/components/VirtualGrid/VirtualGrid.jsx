@@ -19,12 +19,12 @@ const COLUMNS = [
   { key: 'project_name',           label: 'PROJECT',   w: 180, sortable: true  },
   { key: 'department',             label: 'DEPT',      w: 100, sortable: true  },
   { key: 'status',                 label: 'STATUS',    w: 88,  sortable: true  },
-  { key: 'budget',                 label: 'BUDGET',    w: 104, sortable: true  },
-  { key: 'roi_percent',            label: 'ROI %',     w: 88,  sortable: true  },
-  { key: 'employee_hours_saved',   label: 'HRS SAVED', w: 88,  sortable: true  },
-  { key: 'cumulative_savings',     label: 'SAVINGS',   w: 104, sortable: true  },
-  { key: 'active_robots',          label: 'ROBOTS',    w: 72,  sortable: true  },
-  { key: '_zScore',                label: 'σ',         w: 52,  sortable: false },
+  { key: 'budget',                 label: 'BUDGET',    w: 104, sortable: true, align: 'right' },
+  { key: 'roi_percent',            label: 'ROI %',     w: 88,  sortable: true, align: 'right' },
+  { key: 'employee_hours_saved',   label: 'HRS SAVED', w: 88,  sortable: true, align: 'right' },
+  { key: 'cumulative_savings',     label: 'SAVINGS',   w: 104, sortable: true, align: 'right' },
+  { key: 'active_robots',          label: 'ROBOTS',    w: 72,  sortable: true, align: 'right' },
+  { key: '_zScore',                label: 'σ',         w: 52,  sortable: false, align: 'right' },
   { key: 'country',                label: 'CTY',       w: 52,  sortable: false },
   { key: 'implementation_partner', label: 'PARTNER',   w: 108, sortable: false },
 ];
@@ -117,6 +117,7 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) 
           width:${col.w}px; flex-shrink:0;
           color:#94a3b8;
           transition: color 0.2s ease;
+          text-align: ${col.align || 'left'};
         `;
         row.appendChild(td);
       });
@@ -223,6 +224,7 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) 
                 userSelect: 'none',
                 whiteSpace: 'nowrap', overflow: 'hidden',
                 transition: 'color 0.15s',
+                textAlign: col.align || 'left',
               }}
               onMouseEnter={e => { if (col.sortable) e.target.style.color = '#38bdf8'; }}
               onMouseLeave={e => { if (col.sortable) e.target.style.color = ind ? '#38bdf8' : '#334155'; }}
@@ -239,23 +241,36 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) 
         })}
       </div>
 
-      {/* ── Virtual scroll viewport ── */}
-      <div
-        ref={(el) => {
-          containerRef.current = el;
-          if (gridRef) gridRef.current = el;
-        }}
-        style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative' }}
-        onScroll={onScroll}
-        role="grid"
-        aria-label="RPA telemetry data grid"
-        aria-rowcount={rows.length}
-      >
-        {/* Total height spacer */}
-        <div style={{ height: rows.length * ROW_H, position: 'relative', minWidth: '860px' }}>
-          <div ref={scrollRef} style={{ position: 'absolute', inset: 0 }} />
+      {/* ── Virtual scroll viewport or Empty State ── */}
+      {rows.length === 0 ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontFamily: '"JetBrains Mono",monospace', fontSize: '10px' }}>
+          <div style={{ marginBottom: '8px', color: '#475569' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <span>NO RECORDS MATCH QUERY</span>
+          <span style={{ color: '#475569', marginTop: '4px' }}>Clear filters to resume telemetry</span>
         </div>
-      </div>
+      ) : (
+        <div
+          ref={(el) => {
+            containerRef.current = el;
+            if (gridRef) gridRef.current = el;
+          }}
+          style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative' }}
+          onScroll={onScroll}
+          role="grid"
+          aria-label="RPA telemetry data grid"
+          aria-rowcount={rows.length}
+        >
+          {/* Total height spacer */}
+          <div style={{ height: rows.length * ROW_H, position: 'relative', minWidth: '860px' }}>
+            <div ref={scrollRef} style={{ position: 'absolute', inset: 0 }} />
+          </div>
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <div style={{
