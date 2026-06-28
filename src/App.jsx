@@ -22,6 +22,7 @@ import { exportSnapshot }   from './lib/csvExport';
 import { useRowInspector }  from './hooks/useRowInspector';
 import { RowInspector }     from './components/RowInspector/RowInspector';
 import { AnalyticsOverlay } from './components/AnalyticsOverlay/AnalyticsOverlay';
+import { EngineeringHUD }   from './components/EngineeringHUD/EngineeringHUD';
 
 function Clock() {
   const ref = useRef(null);
@@ -337,8 +338,8 @@ export default function App() {
           pausedAt={pausedAt}
         />
       )}
-
-
+      {/* ── ENGINEERING HUD ── */}
+      <EngineeringHUD gridRef={gridRef} tickDurationRef={lastTickDurationRef} />
 
       {/* ── ROW INSPECTOR — portal at document.body, isolated from grid re-renders (Trap 3) ── */}
       {inspector.open && (
