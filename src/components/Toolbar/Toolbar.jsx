@@ -52,6 +52,7 @@ function FilterDropdown({ def, selected, onChange }) {
           {def.options.map(opt => (
             <label
               key={opt}
+              onClick={() => toggle(opt)}
               className="flex items-center gap-2 px-3 py-1.5 font-mono text-[10px] text-slate-400 hover:bg-white/5 cursor-pointer select-none"
             >
               <span className={`w-3 h-3 border rounded-sm flex items-center justify-center text-[8px]

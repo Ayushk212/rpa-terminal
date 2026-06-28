@@ -2,9 +2,9 @@
 // Stream → Buffer → Pipeline → Grid + AnomalyTray + Panels
 
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { usePipeline }      from './hooks/usePipeline';
+import { useStream }        from './hooks/useStream';
 import { useBuffer }        from './hooks/useBuffer';
-import { useCSVStream }     from './hooks/useCSVStream';
+import { usePipeline }      from './hooks/usePipeline';
 import { useLayout }        from './hooks/useLayout';
 
 import { KPIStrip }         from './components/KPIStrip/KPIStrip';
@@ -52,13 +52,21 @@ function LatencyBadge() {
 }
 
 export default function App() {
-  const [showHero, setShowHero] = useState(true);
+  const [showHero,    setShowHero]    = useState(true);
+  const [dataReady,   setDataReady]   = useState(false);
   const pipeline    = usePipeline();
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
+  useStream(buffer.ingest);
 
-  // Connect stream to buffer using the new native hook
-  useCSVStream(buffer.ingest);
+  // Wait for RPAStream baseline to be ready before rendering grid
+  useEffect(() => {
+    const rpa = window.RPAStream;
+    if (!rpa) return;
+    if (rpa.isReady && rpa.isReady()) { setDataReady(true); return; }
+    if (rpa.onReady) { rpa.onReady(() => setDataReady(true)); }
+    else              { setDataReady(true); } // old fallback
+  }, []);
 
   const handleSort = useCallback((key, shiftHeld) => {
     pipeline.setSort(buildSortConfig(pipeline.sortConfig, key, shiftHeld));
@@ -70,10 +78,31 @@ export default function App() {
 
   if (showHero) return <Hero onEnter={() => setShowHero(false)} />;
 
+  // Loading screen while 50k rows are being generated in dataStream.js
+  if (!dataReady) return (
+    <div style={{
+      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+      height:'100vh',background:'#020617',gap:'20px',
+    }}>
+      <div style={{width:'220px',height:'2px',background:'#1e293b',borderRadius:'2px',overflow:'hidden'}}>
+        <div style={{
+          height:'100%',background:'#38bdf8',borderRadius:'2px',
+          animation:'_ldbar 1.4s ease-in-out infinite',
+        }}/>
+      </div>
+      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:'10px',
+                    color:'#334155',letterSpacing:'0.15em'}}>
+        INITIALISING 50,000 ROW BASELINE…
+      </span>
+      <style>{'@keyframes _ldbar{0%{width:0%;margin-left:0%}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}'}</style>
+    </div>
+  );
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0f172a', overflow:'hidden' }}>
-      <div style={{
 
+      {/* ── TOP STATUS BAR ── */}
+      <div style={{
         display:'flex', alignItems:'center', gap:'16px',
         padding:'0 12px', height:'32px',
         background:'#020617', borderBottom:'1px solid #1e293b',

@@ -45,5 +45,5 @@ export function useBuffer(onFlush) {
     if (pausedRef.current) play(); else pause();
   }, [pause, play]);
 
-  return { paused, toggle, pause, play, queueLength: () => queueRef.current.length };
+  return { paused, toggle, pause, play, ingest, queueLength: () => queueRef.current.length };
 }
