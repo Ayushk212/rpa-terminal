@@ -2,9 +2,9 @@
 // Stream → Buffer → Pipeline → Grid + AnomalyTray + Panels
 
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { useStream }        from './hooks/useStream';
-import { useBuffer }        from './hooks/useBuffer';
 import { usePipeline }      from './hooks/usePipeline';
+import { useBuffer }        from './hooks/useBuffer';
+import { useCSVStream }     from './hooks/useCSVStream';
 import { useLayout }        from './hooks/useLayout';
 
 import { KPIStrip }         from './components/KPIStrip/KPIStrip';
@@ -56,7 +56,9 @@ export default function App() {
   const pipeline    = usePipeline();
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
-  useStream(buffer.ingest);
+
+  // Connect stream to buffer using the new native hook
+  useCSVStream(buffer.ingest);
 
   const handleSort = useCallback((key, shiftHeld) => {
     pipeline.setSort(buildSortConfig(pipeline.sortConfig, key, shiftHeld));
@@ -66,17 +68,10 @@ export default function App() {
     pipeline.setFilters(typeof updater === 'function' ? updater(pipeline.filters) : updater);
   }, [pipeline]);
 
-  const debugOverlay = (
-    <div style={{position: 'absolute', top: 0, left: 0, background: 'rgba(0,0,0,0.8)', color: 'red', zIndex: 99999, padding: '10px', fontSize: '14px', fontFamily: 'monospace'}}>
-      DEBUG: View = {pipeline.view.length} | KPI Rows = {pipeline.kpiRef.current?.rows} | Stream = {window.RPAStream ? 'Yes' : 'No'} | Baseline = {window.RPAStream?.getBaseline().length}
-    </div>
-  );
-
-  if (showHero) return <>{debugOverlay}<Hero onEnter={() => setShowHero(false)} /></>;
+  if (showHero) return <Hero onEnter={() => setShowHero(false)} />;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0f172a', overflow:'hidden' }}>
-      {debugOverlay}
       <div style={{
 
         display:'flex', alignItems:'center', gap:'16px',
