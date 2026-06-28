@@ -241,36 +241,45 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) 
         })}
       </div>
 
-      {/* ── Virtual scroll viewport or Empty State ── */}
-      {rows.length === 0 ? (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontFamily: '"JetBrains Mono",monospace', fontSize: '12px' }}>
-          <div style={{ marginBottom: '12px', color: '#475569' }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+      {/* ── Virtual scroll viewport (always mounted so ResizeObserver / pool never orphan) ── */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        {/* Empty-state overlay — shown on top when no rows match */}
+        {rows.length === 0 && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 10,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            color: '#94a3b8', fontFamily: '"JetBrains Mono",monospace', fontSize: '12px',
+            pointerEvents: 'none',
+          }}>
+            <div style={{ marginBottom: '12px', color: '#475569' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <span>NO RECORDS MATCH QUERY</span>
+            <span style={{ color: '#64748b', marginTop: '6px', fontSize: '10px' }}>Clear filters to resume telemetry</span>
           </div>
-          <span>NO RECORDS MATCH QUERY</span>
-          <span style={{ color: '#64748b', marginTop: '6px', fontSize: '10px' }}>Clear filters to resume telemetry</span>
-        </div>
-      ) : (
+        )}
+
+        {/* Scroll container — never unmounts */}
         <div
           ref={(el) => {
             containerRef.current = el;
             if (gridRef) gridRef.current = el;
           }}
-          style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative' }}
+          style={{ height: '100%', overflowY: 'auto', overflowX: 'auto', position: 'relative' }}
           onScroll={onScroll}
           role="grid"
           aria-label="RPA telemetry data grid"
           aria-rowcount={rows.length}
         >
-          {/* Total height spacer */}
+          {/* Total height spacer drives scroll thumb size */}
           <div style={{ height: rows.length * ROW_H, position: 'relative', minWidth: '860px' }}>
             <div ref={scrollRef} style={{ position: 'absolute', inset: 0 }} />
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── Footer ── */}
       <div style={{
