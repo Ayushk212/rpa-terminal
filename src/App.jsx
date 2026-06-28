@@ -19,6 +19,8 @@ import { WorkspacePanel, LayoutControls, InfraToggles } from './components/Works
 
 import { buildSortConfig }  from './lib/sorter';
 import { exportSnapshot }   from './lib/csvExport';
+import { useRowInspector }  from './hooks/useRowInspector';
+import { RowInspector }     from './components/RowInspector/RowInspector';
 import { AnalyticsOverlay } from './components/AnalyticsOverlay/AnalyticsOverlay';
 import { EngineeringHUD }   from './components/EngineeringHUD/EngineeringHUD';
 function Clock() {
@@ -77,10 +79,13 @@ export default function App() {
 
   const lastTickDurationRef = useRef(0);
   const gridRef             = useRef(null);
+  // Trap 2: ref so isPaused state is always fresh inside VirtualGrid onclick closures
+  const isPausedRef         = useRef(false);
 
   const pipeline    = usePipeline(lastTickDurationRef);
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
+  const inspector = useRowInspector(buffer.paused);
 
   const handleIngest = useCallback((chunk, isBaseline) => {
     if (!infraState.streamIngestion && !isBaseline) return;
@@ -125,6 +130,9 @@ export default function App() {
     if (rpa.onReady) { rpa.onReady(() => setDataReady(true)); }
     else              { setDataReady(true); } // old fallback
   }, []);
+
+  // Keep isPausedRef in sync with actual paused state (Trap 2)
+  useEffect(() => { isPausedRef.current = buffer.paused; }, [buffer.paused]);
 
   // When paused toggled off, close analytics automatically
   useEffect(() => {
@@ -283,6 +291,9 @@ export default function App() {
                 isReplaying={pipeline.isReplaying}
                 gridRef={gridRef}
                 coldArchival={infraState.coldArchival}
+                onRowClick={inspector.openInspector}
+                isPausedRef={isPausedRef}
+                onPause={buffer.toggle}
               />
             </div>
           </div>
@@ -328,6 +339,11 @@ export default function App() {
 
       {/* ── ENGINEERING HUD ── */}
       <EngineeringHUD gridRef={gridRef} tickDurationRef={lastTickDurationRef} />
+
+      {/* ── ROW INSPECTOR — portal at document.body, isolated from grid re-renders (Trap 3) ── */}
+      {inspector.open && (
+        <RowInspector row={inspector.row} onClose={inspector.closeInspector} />
+      )}
 
     </div>
   );

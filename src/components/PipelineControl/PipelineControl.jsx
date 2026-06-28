@@ -7,6 +7,7 @@ export function PipelineControl({ paused, onToggle, queueLength, onAnalytics, an
   const [reconnecting, setReconnecting] = useState(false);
   const [stressThrottled, setStressThrottled] = useState(false);
   const [showStressMenu, setShowStressMenu] = useState(false);
+  const [showPauseTip, setShowPauseTip] = useState(false);
 
   useEffect(() => {
     if (!paused) { setQLen(0); return; }
@@ -18,6 +19,10 @@ export function PipelineControl({ paused, onToggle, queueLength, onAnalytics, an
     if (paused) {
       setReconnecting(true);
       setTimeout(() => setReconnecting(false), 1200);
+    } else {
+      // Show onboarding tip pointing to the RESUME button location
+      setShowPauseTip(true);
+      setTimeout(() => setShowPauseTip(false), 4000);
     }
     onToggle();
   };
@@ -95,38 +100,70 @@ export function PipelineControl({ paused, onToggle, queueLength, onAnalytics, an
         </button>
       )}
 
-      {/* Pause / Resume button */}
-      <button
-        onClick={handleToggle}
-        aria-label={paused ? 'Resume stream' : 'Pause stream'}
-        style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          fontFamily: '"JetBrains Mono",monospace', fontSize: '10px',
-          letterSpacing: '0.06em',
-          padding: '4px 10px',
-          border: `1px solid ${paused ? '#FFC80180' : '#1e293b'}`,
-          borderRadius: '2px',
-          background: paused ? '#FFC8010a' : 'transparent',
-          color: paused ? '#FFC801' : '#475569',
-          cursor: 'pointer',
-          transition: 'all 0.15s',
-          whiteSpace: 'nowrap',
-        }}
-        onMouseEnter={e => {
-          if (!paused) {
-            e.currentTarget.style.borderColor = '#334155';
-            e.currentTarget.style.color = '#e2e8f0';
-          }
-        }}
-        onMouseLeave={e => {
-          if (!paused) {
-            e.currentTarget.style.borderColor = '#1e293b';
-            e.currentTarget.style.color = '#475569';
-          }
-        }}
-      >
-        {paused ? <><span>▶</span> RESUME</> : <><span>⏸</span> PAUSE</>}
-      </button>
+      {/* Pause / Resume button with onboarding tooltip */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={handleToggle}
+          aria-label={paused ? 'Resume stream' : 'Pause stream'}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            fontFamily: '"JetBrains Mono",monospace', fontSize: '10px',
+            letterSpacing: '0.06em',
+            padding: '4px 10px',
+            border: `1px solid ${paused ? '#FFC80180' : '#1e293b'}`,
+            borderRadius: '2px',
+            background: paused ? '#FFC8010a' : 'transparent',
+            color: paused ? '#FFC801' : '#475569',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={e => {
+            if (!paused) {
+              e.currentTarget.style.borderColor = '#334155';
+              e.currentTarget.style.color = '#e2e8f0';
+            }
+          }}
+          onMouseLeave={e => {
+            if (!paused) {
+              e.currentTarget.style.borderColor = '#1e293b';
+              e.currentTarget.style.color = '#475569';
+            }
+          }}
+        >
+          {paused ? <><span>▶</span> RESUME</> : <><span>⏸</span> PAUSE</>}
+        </button>
+
+        {/* Onboarding tooltip — appears for 4s after pausing */}
+        {showPauseTip && (
+          <div style={{
+            position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+            background: '#020617', border: '1px solid #38bdf830',
+            borderRadius: '4px', padding: '10px 14px', zIndex: 100,
+            width: '210px', boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+            fontFamily: '"JetBrains Mono",monospace',
+            pointerEvents: 'none',
+          }}>
+            {/* Arrow pointing up at the button */}
+            <div style={{
+              position: 'absolute', top: '-5px', right: '18px',
+              width: '8px', height: '8px',
+              background: '#020617', border: '1px solid #38bdf830',
+              borderRight: 'none', borderBottom: 'none',
+              transform: 'rotate(45deg)',
+            }} />
+            <div style={{ fontSize: '8px', color: '#38bdf8', letterSpacing: '0.15em', marginBottom: '6px' }}>
+              STREAM PAUSED
+            </div>
+            <div style={{ fontSize: '9px', color: '#94a3b8', lineHeight: 1.6 }}>
+              Now click any row to inspect its full details.
+            </div>
+            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '6px', lineHeight: 1.6 }}>
+              Click <span style={{ color: '#FFC801' }}>▶ RESUME</span> here to restart the live stream.
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Stress Test Injector */}
       <div style={{ position: 'relative' }}>

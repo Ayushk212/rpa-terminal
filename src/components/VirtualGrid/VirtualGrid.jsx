@@ -4,7 +4,7 @@
 // Signal strip: 4px left border, CSS-transitioned color per _signal tag
 // Features 3, 4, 9 + anomaly signal strip
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { buildSortConfig, getSortIndicator } from '../../lib/sorter';
 import {
   formatCurrency, formatROI, formatHours,
@@ -63,7 +63,7 @@ function flashClass(row) {
   return '';
 }
 
-export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, coldArchival }) {
+export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, coldArchival, onRowClick, isPausedRef, onPause }) {
   const containerRef  = useRef(null);
   const scrollRef     = useRef(null);
   const rowNodesRef   = useRef([]);
@@ -71,6 +71,7 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
   const scrollTopRef  = useRef(0);
   const rowsRef       = useRef(rows);
   const poolSizeRef   = useRef(0);
+  const [toastMsg, setToastMsg] = useState(null);
 
   useEffect(() => { rowsRef.current = rows; }, [rows]);
 
@@ -163,7 +164,7 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
         }
       }
 
-      // Write cell values directly
+      // Write cell values directly + rebind onclick on every paint (Trap 1 & 2)
       COLUMNS.forEach((col, ci) => {
         const td  = rowEl.children[ci + 1]; // offset for strip
         if (!td) return;
@@ -172,6 +173,21 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
         if (td.textContent !== val)         td.textContent    = val;
         if (td.style.color   !== color)     td.style.color    = color;
       });
+
+      // Trap 1: rebind onclick closure with the data object for THIS recycle
+      // Trap 2: read isPausedRef.current at CLICK time, not at recycle time
+      const capturedRow = row; // close over data object, not DOM
+      rowEl.style.cursor = 'pointer';
+      rowEl.onclick = () => {
+        if (isPausedRef && !isPausedRef.current) {
+          // Show clickable toast for 5 seconds
+          setToastMsg('PAUSE TO INSPECT ROWS');
+          clearTimeout(rowEl.__toastTimer);
+          rowEl.__toastTimer = setTimeout(() => setToastMsg(null), 5000);
+          return;
+        }
+        if (onRowClick) onRowClick(capturedRow);
+      };
     });
   }, [isReplaying]);
 
@@ -280,6 +296,32 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
           </div>
         </div>
       </div>
+
+      {/* Toast hint — clickable, lasts 5s, shown when clicking a row while live */}
+      {toastMsg && (
+        <div
+          onClick={() => { if (onPause) onPause(); setToastMsg(null); }}
+          style={{
+            position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(15,23,42,0.97)', border: '1px solid #fbbf2450',
+            padding: '8px 16px', borderRadius: '4px', zIndex: 50,
+            fontFamily: '"JetBrains Mono",monospace', fontSize: '9px',
+            color: '#fbbf24', letterSpacing: '0.1em',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '10px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            userSelect: 'none',
+          }}
+        >
+          <span>⏸</span>
+          <span>PAUSE TO INSPECT ROWS</span>
+          <span style={{
+            background: '#fbbf2420', border: '1px solid #fbbf2440',
+            padding: '2px 8px', borderRadius: '2px', fontSize: '8px',
+            color: '#fbbf24',
+          }}>CLICK TO PAUSE</span>
+        </div>
+      )}
 
       {/* ── Footer ── */}
       <div style={{
