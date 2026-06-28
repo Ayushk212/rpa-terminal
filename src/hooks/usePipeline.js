@@ -10,7 +10,7 @@ import { classifyRow, updateStats } from '../lib/anomaly';
 const SNAPSHOT_INTERVAL_MS = 2000;
 const SNAPSHOT_MAX         = 30;
 
-export function usePipeline() {
+export function usePipeline(lastTickDurationRef) {
   const rowMapRef  = useRef(new Map());   // id → row (with _signal tags)
   const searchRef  = useRef('');
   const filtersRef = useRef({});
@@ -33,6 +33,7 @@ export function usePipeline() {
 
   // ── Derive view from rowMap + current pipeline params ──
   const recompute = useCallback(() => {
+    const t0 = performance.now();
     let rows = Array.from(rowMapRef.current.values());
 
     const f = filtersRef.current;
@@ -50,7 +51,11 @@ export function usePipeline() {
     // Surface anomalies separately for the tray
     const anom = rows.filter(r => r._signal === 'anomaly' || r._signal === 'drift');
     setAnomalies(anom.slice(0, 12)); // cap tray at 12 chips
-  }, []);
+
+    if (lastTickDurationRef) {
+      lastTickDurationRef.current = performance.now() - t0;
+    }
+  }, [lastTickDurationRef]);
 
   // ── Tag a row with its anomaly classification ──
   function tagRow(row) {

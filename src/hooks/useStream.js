@@ -1,7 +1,7 @@
 // src/hooks/useStream.js — REPLACE YOUR EXISTING FILE WITH THIS
 // Fixed: StrictMode double-invoke + waits for 50k baseline to be ready
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 export function useStream(onChunk) {
   const cbRef        = useRef(onChunk);
@@ -53,4 +53,13 @@ export function useStream(onChunk) {
       rpa.stop();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const injectBurst = useCallback((count = 5000) => {
+    if (window.RPAStream && window.RPAStream.generateRows) {
+      const rows = window.RPAStream.generateRows(count);
+      cbRef.current && cbRef.current(rows, false);
+    }
+  }, []);
+
+  return { injectBurst };
 }

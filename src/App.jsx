@@ -19,8 +19,7 @@ import { WorkspacePanel, LayoutControls, InfraToggles } from './components/Works
 
 import { buildSortConfig }  from './lib/sorter';
 import { AnalyticsOverlay } from './components/AnalyticsOverlay/AnalyticsOverlay';
-
-
+import { EngineeringHUD }   from './components/EngineeringHUD/EngineeringHUD';
 function Clock() {
   const ref = useRef(null);
   useEffect(() => {
@@ -59,10 +58,13 @@ export default function App() {
   const [frozenRows, setFrozenRows]       = useState([]);
   const [pausedAt, setPausedAt]           = useState(null);
 
-  const pipeline    = usePipeline();
+  const lastTickDurationRef = useRef(0);
+  const gridRef             = useRef(null);
+
+  const pipeline    = usePipeline(lastTickDurationRef);
   const { layout, togglePanel } = useLayout();
   const buffer = useBuffer(pipeline.ingest);
-  useStream(buffer.ingest);
+  const { injectBurst } = useStream(buffer.ingest);
 
   // Wait for RPAStream baseline to be ready before rendering grid
   useEffect(() => {
@@ -164,6 +166,22 @@ export default function App() {
         )}
 
         <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px'}}>
+          <button 
+            onClick={() => {
+              localStorage.setItem('hideHero', 'false');
+              setShowHero(true);
+            }}
+            style={{
+              fontFamily: '"JetBrains Mono",monospace', fontSize: '10px',
+              color: '#38bdf8', background: 'transparent',
+              border: '1px solid #1e293b', padding: '4px 8px',
+              borderRadius: '2px', cursor: 'pointer', transition: 'border-color 0.15s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = '#38bdf8'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#1e293b'}
+          >
+            ◀ RETURN
+          </button>
           <LayoutControls layout={layout} togglePanel={togglePanel} />
           <PipelineControl
             paused={buffer.paused}
@@ -171,6 +189,7 @@ export default function App() {
             queueLength={buffer.queueLength}
             onAnalytics={handleAnalyticsToggle}
             analyticsOpen={analyticsOpen}
+            onStressTest={injectBurst}
           />
           <Clock />
         </div>
@@ -204,6 +223,7 @@ export default function App() {
             />
             <div style={{flex:1,overflow:'hidden'}}>
               <VirtualGrid
+                gridRef={gridRef}
                 rows={pipeline.view}
                 sortConfig={pipeline.sortConfig}
                 onSort={handleSort}
@@ -250,6 +270,9 @@ export default function App() {
           pausedAt={pausedAt}
         />
       )}
+
+      {/* ── ENGINEERING HUD ── */}
+      <EngineeringHUD gridRef={gridRef} tickDurationRef={lastTickDurationRef} />
 
     </div>
   );

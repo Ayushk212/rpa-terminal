@@ -63,7 +63,7 @@ function flashClass(row) {
   return '';
 }
 
-export function VirtualGrid({ rows, sortConfig, onSort, isReplaying }) {
+export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef }) {
   const containerRef  = useRef(null);
   const scrollRef     = useRef(null);
   const rowNodesRef   = useRef([]);
@@ -89,6 +89,7 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying }) {
 
     for (let i = 0; i < needed; i++) {
       const row = document.createElement('div');
+      row.setAttribute('data-row', 'true');
       row.style.cssText = `
         display:flex; align-items:center; height:${ROW_H}px;
         position:absolute; left:0; right:0;
@@ -240,7 +241,10 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying }) {
 
       {/* ── Virtual scroll viewport ── */}
       <div
-        ref={containerRef}
+        ref={(el) => {
+          containerRef.current = el;
+          if (gridRef) gridRef.current = el;
+        }}
         style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', position: 'relative' }}
         onScroll={onScroll}
         role="grid"

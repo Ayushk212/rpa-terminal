@@ -93,6 +93,16 @@
     start : function() { if(running)return; running=true; timer=setInterval(tick,TICK_MS); },
     stop  : function() { running=false; clearInterval(timer); timer=null; },
     isRunning: function() { return running; },
+    generateRows: function(count) {
+      var c = count || 5000;
+      var res = [];
+      for(var i=0; i<c; i++){
+        var nr = row('RPA-BURST-'+Math.random().toString(36).slice(2,8).toUpperCase(), baseline.length + i);
+        nr._isNew = true;
+        res.push(nr);
+      }
+      return res;
+    }
   };
 
 })(window);
