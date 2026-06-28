@@ -72,12 +72,29 @@ export function EngineeringHUD({ gridRef, tickDurationRef }) {
     return '#ef4444'; // Red
   };
 
+  const getDomRowsColor = (count) => {
+    if (count <= 52) return '#4ade80'; // Green
+    if (count <= 100) return '#fbbf24'; // Amber
+    return '#ef4444'; // Red
+  };
+
+  const getHeapColor = (mb) => {
+    if (!mb) return '#94a3b8';
+    if (mb <= 150) return '#4ade80'; // Green
+    if (mb <= 300) return '#fbbf24'; // Amber
+    return '#ef4444'; // Red
+  };
+
+  const getTickColor = (ms) => {
+    if (ms <= 16) return '#4ade80'; // Green
+    if (ms <= 50) return '#fbbf24'; // Amber
+    return '#ef4444'; // Red
+  };
+
   return (
     <div 
-      className="fixed top-4 right-4 z-[9999] rounded font-mono text-[11px] select-none shadow-2xl"
+      className="fixed top-4 right-4 z-[9999] rounded font-mono text-[11px] select-none shadow-2xl border border-term-border bg-term-bg"
       style={{
-        background: '#020617',
-        border: '1px solid #1e293b',
         padding: '8px 12px',
         backdropFilter: 'blur(4px)',
         minWidth: '140px',
@@ -87,7 +104,7 @@ export function EngineeringHUD({ gridRef, tickDurationRef }) {
       }}
     >
       <div 
-        className="flex justify-between items-center mb-2 pb-1 border-b border-[#1e293b] cursor-grab active:cursor-grabbing"
+        className="flex justify-between items-center mb-2 pb-1 border-b border-term-border cursor-grab active:cursor-grabbing"
         onMouseDown={handleMouseDown}
       >
         <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>PERF HUD</span>
@@ -109,17 +126,17 @@ export function EngineeringHUD({ gridRef, tickDurationRef }) {
         
         <div className="flex justify-between">
           <span style={{ color: '#38bdf8' }}>DOM ROWS:</span>
-          <span className="text-slate-200 font-bold">{metrics.domNodeCount}</span>
+          <span style={{ color: getDomRowsColor(metrics.domNodeCount), fontWeight: 'bold' }}>{metrics.domNodeCount}</span>
         </div>
         
         <div className="flex justify-between">
           <span style={{ color: '#38bdf8' }}>HEAP MB:</span>
-          <span className="text-slate-200 font-bold">{metrics.heapMB || '--'}</span>
+          <span style={{ color: getHeapColor(metrics.heapMB), fontWeight: 'bold' }}>{metrics.heapMB || '--'}</span>
         </div>
         
         <div className="flex justify-between">
           <span style={{ color: '#38bdf8' }}>TICK MS:</span>
-          <span className="text-slate-200 font-bold">{metrics.tickDurationMs}</span>
+          <span style={{ color: getTickColor(metrics.tickDurationMs), fontWeight: 'bold' }}>{metrics.tickDurationMs}</span>
         </div>
       </div>
     </div>

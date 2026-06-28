@@ -54,10 +54,10 @@ export function LayoutControls({ layout, togglePanel }) {
 export function InfraToggles({ infraState, toggleInfra }) {
   const items = [
     { key: 'streamIngestion', label: 'STREAM INGESTION', color: '#4ade80' },
-    { key: 'alertDispatch',   label: 'ALERT DISPATCH',   color: '#fbbf24' },
-    { key: 'auditLogging',    label: 'AUDIT LOGGING',    color: '#38bdf8' },
-    { key: 'coldArchival',    label: 'COLD ARCHIVAL',    color: '#64748b' },
-    { key: 'failoverReplica', label: 'FAILOVER REPLICA', color: '#FFC801' },
+    { key: 'alertDispatch',   label: 'ALERT DISPATCH',   color: '#4ade80' },
+    { key: 'auditLogging',    label: 'AUDIT LOGGING',    color: '#4ade80' },
+    { key: 'coldArchival',    label: 'COLD ARCHIVAL',    color: '#4ade80' },
+    { key: 'failoverReplica', label: 'FAILOVER REPLICA', color: '#fbbf24' },
   ];
 
   if (!infraState) return null;

@@ -35,7 +35,11 @@ function cellValue(row, key) {
     case 'roi_percent':          return formatROI(row.roi_percent);
     case 'employee_hours_saved': return formatHours(row.employee_hours_saved);
     case 'cumulative_savings':   return formatCurrency(row.cumulative_savings);
-    case '_zScore':              return row._zScore != null ? row._zScore.toFixed(1) + 'σ' : '—';
+    case '_zScore': {
+      if (row._zScore == null) return '—';
+      const fixed = row._zScore.toFixed(1);
+      return fixed === '0.0' ? '—' : fixed + 'σ';
+    }
     default:                     return row[key] != null ? String(row[key]) : '—';
   }
 }

@@ -5,11 +5,6 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { SIGNAL_COLORS } from '../../lib/anomaly';
 
-const DEPT_COLORS = {
-  Finance:'#38bdf8', HR:'#4ade80', Operations:'#FFC801',
-  IT:'#FF9932', Legal:'#a78bfa', 'Supply Chain':'#f472b6',
-  Marketing:'#fb923c', Procurement:'#34d399',
-};
 
 export function DepartmentChart({ rows }) {
   const canvasRef = useRef(null);
@@ -50,7 +45,7 @@ export function DepartmentChart({ rows }) {
     deptData.forEach((d, i) => {
       const y     = 4 + i * (rowH + 3);
       const barW  = (d.savings / maxSavings) * barMaxW;
-      const color = DEPT_COLORS[d.dept] || '#38bdf8';
+      const color = i === 0 ? '#38bdf8' : '#334155';
 
       // Background track
       ctx.fillStyle = 'rgba(30,41,59,0.5)';
@@ -70,7 +65,7 @@ export function DepartmentChart({ rows }) {
 
       // Dept label
       ctx.font = `500 9px "JetBrains Mono", monospace`;
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = i === 0 ? '#38bdf8' : '#475569';
       ctx.fillText(d.dept.slice(0, 9), 2, y + rowH * 0.68);
 
       // Anomaly/drift dots
@@ -100,7 +95,7 @@ export function DepartmentChart({ rows }) {
         ? `$${(d.savings/1e6).toFixed(1)}M`
         : `$${(d.savings/1e3).toFixed(0)}k`;
       ctx.font = `9px "JetBrains Mono", monospace`;
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = i === 0 ? '#38bdf8' : '#475569';
       ctx.fillText(val, labelW + barW + 5, y + rowH * 0.68);
     });
   }, [deptData]);
