@@ -15,7 +15,7 @@ import { SIGNAL_COLORS } from '../../lib/anomaly';
 const ROW_H  = 28;
 const BUFFER = 6;
 
-const COLUMNS = [
+export const COLUMNS = [
   { key: 'project_name',           label: 'PROJECT',   w: 180, sortable: true  },
   { key: 'department',             label: 'DEPT',      w: 100, sortable: true  },
   { key: 'status',                 label: 'STATUS',    w: 88,  sortable: true  },

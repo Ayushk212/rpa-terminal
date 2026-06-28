@@ -8,7 +8,7 @@ import { usePipeline }      from './hooks/usePipeline';
 import { useLayout }        from './hooks/useLayout';
 
 import { KPIStrip }         from './components/KPIStrip/KPIStrip';
-import { VirtualGrid }      from './components/VirtualGrid/VirtualGrid';
+import { VirtualGrid, COLUMNS } from './components/VirtualGrid/VirtualGrid';
 import { Toolbar }          from './components/Toolbar/Toolbar';
 import { PipelineControl }  from './components/PipelineControl/PipelineControl';
 import { DepartmentChart }  from './components/DepartmentChart/DepartmentChart';
@@ -18,6 +18,7 @@ import { Hero }             from './components/Hero/Hero';
 import { WorkspacePanel, LayoutControls, InfraToggles } from './components/WorkspacePanel/WorkspacePanel';
 
 import { buildSortConfig }  from './lib/sorter';
+import { exportSnapshot }   from './lib/csvExport';
 import { AnalyticsOverlay } from './components/AnalyticsOverlay/AnalyticsOverlay';
 import { EngineeringHUD }   from './components/EngineeringHUD/EngineeringHUD';
 function Clock() {
@@ -60,6 +61,7 @@ export default function App() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [frozenRows, setFrozenRows]       = useState([]);
   const [pausedAt, setPausedAt]           = useState(null);
+  const [isExporting, setIsExporting]     = useState(false);
 
   const [infraState, setInfraState] = useState({
     streamIngestion: true,
@@ -97,6 +99,23 @@ export default function App() {
   }, [infraState, buffer]);
 
   const { injectBurst } = useStream(handleIngest);
+
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    await exportSnapshot(pipeline.view, COLUMNS);
+    setIsExporting(false);
+  }, [pipeline.view]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        handleExport();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleExport]);
 
   // Wait for RPAStream baseline to be ready before rendering grid
   useEffect(() => {
@@ -253,6 +272,8 @@ export default function App() {
               viewCount={pipeline.view.length}
               totalCount={pipeline.view.length}
               sortConfig={pipeline.sortConfig}
+              isExporting={isExporting}
+              onExport={handleExport}
             />
             <div style={{flex:1,overflow:'hidden'}}>
               <VirtualGrid

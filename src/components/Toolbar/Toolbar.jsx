@@ -76,7 +76,7 @@ function FilterDropdown({ def, selected, onChange }) {
   );
 }
 
-export function Toolbar({ search, onSearch, filters, onFilters, filterOptions, viewCount, totalCount, sortConfig }) {
+export function Toolbar({ search, onSearch, filters, onFilters, filterOptions, viewCount, totalCount, sortConfig, isExporting, onExport }) {
   const debounceRef = useRef(null);
 
   const handleSearch = (e) => {
@@ -142,8 +142,21 @@ export function Toolbar({ search, onSearch, filters, onFilters, filterOptions, v
         </div>
       )}
 
-      <div className="ml-auto font-mono text-[9px] text-slate-600 whitespace-nowrap">
-        {viewCount.toLocaleString()} / {totalCount.toLocaleString()} rows
+      <div className="ml-auto flex items-center gap-4">
+        <div className="font-mono text-[9px] text-slate-600 whitespace-nowrap">
+          {viewCount.toLocaleString()} / {totalCount.toLocaleString()} rows
+        </div>
+        <button
+          onClick={onExport}
+          disabled={isExporting}
+          className="
+            font-mono text-[9px] font-bold tracking-wider px-3 py-1.5 rounded transition-colors
+            border border-term-border text-slate-300 bg-term-border/30 hover:bg-term-border/50
+            disabled:opacity-50 disabled:cursor-wait
+          "
+        >
+          {isExporting ? 'EXPORTING...' : 'EXPORT'}
+        </button>
       </div>
     </div>
   );
