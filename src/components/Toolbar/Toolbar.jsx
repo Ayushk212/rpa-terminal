@@ -3,11 +3,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const FILTER_DEFS = [
-  { key: 'status',          label: 'STATUS',    options: ['Active','Completed','Failed','Pending','On Hold'] },
-  { key: 'department',      label: 'DEPT',      options: ['Finance','HR','Operations','IT','Legal','Supply Chain','Marketing','Procurement'] },
-  { key: 'automation_type', label: 'TYPE',      options: ['Cloud','On-Premise','Hybrid','SaaS','Edge'] },
-  { key: 'country',         label: 'COUNTRY',   options: ['US','IN','DE','GB','JP','SG','AU','FR','BR','CA'] },
+const FILTER_KEYS = [
+  { key: 'status',          label: 'STATUS' },
+  { key: 'department',      label: 'DEPT' },
+  { key: 'automation_type', label: 'TYPE' },
+  { key: 'country',         label: 'COUNTRY' },
 ];
 
 function FilterDropdown({ def, selected, onChange }) {
@@ -76,7 +76,7 @@ function FilterDropdown({ def, selected, onChange }) {
   );
 }
 
-export function Toolbar({ search, onSearch, filters, onFilters, viewCount, totalCount, sortConfig }) {
+export function Toolbar({ search, onSearch, filters, onFilters, filterOptions, viewCount, totalCount, sortConfig }) {
   const debounceRef = useRef(null);
 
   const handleSearch = (e) => {
@@ -113,10 +113,10 @@ export function Toolbar({ search, onSearch, filters, onFilters, viewCount, total
       </div>
 
       {/* Filter dropdowns */}
-      {FILTER_DEFS.map(def => (
+      {FILTER_KEYS.map(def => (
         <FilterDropdown
           key={def.key}
-          def={def}
+          def={{ ...def, options: filterOptions?.[def.key] || [] }}
           selected={filters[def.key] || []}
           onChange={handleFilter}
         />

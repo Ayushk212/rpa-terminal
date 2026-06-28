@@ -36,14 +36,17 @@ function Clock() {
   return <span ref={ref} style={{ color: '#fbbf24', fontFamily: '"JetBrains Mono",monospace', fontSize: '9px' }} />;
 }
 
-function LatencyBadge() {
+function LatencyBadge({ tickDurationRef }) {
   const ref = useRef(null);
   useEffect(() => {
     const id = setInterval(() => {
-      if (ref.current) ref.current.textContent = (Math.floor(Math.random() * 6) + 2) + 'ms';
-    }, 800);
+      if (ref.current && tickDurationRef?.current !== undefined) {
+        // Show actual processing duration, minimum 1ms
+        ref.current.textContent = Math.max(1, Math.round(tickDurationRef.current)) + 'ms';
+      }
+    }, 200);
     return () => clearInterval(id);
-  }, []);
+  }, [tickDurationRef]);
   return (
     <span style={{ fontFamily:'"JetBrains Mono",monospace', fontSize:'9px', color:'#334155' }}>
       LAT <span ref={ref} style={{color:'#38bdf8'}}>4ms</span>
@@ -178,7 +181,7 @@ export default function App() {
         <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:'9px',color:'#334155',letterSpacing:'0.06em'}}>
           RPA-DB-2026 <span style={{color:'#38bdf8'}}>global</span>
         </span>
-        <LatencyBadge />
+        <LatencyBadge tickDurationRef={lastTickDurationRef} />
         <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:'9px',color:'#334155'}}>
           TICK <span style={{color:'#38bdf8'}}>200ms</span>
         </span>
@@ -246,6 +249,7 @@ export default function App() {
               onSearch={pipeline.setSearch}
               filters={pipeline.filters}
               onFilters={handleFilters}
+              filterOptions={pipeline.filterOptions}
               viewCount={pipeline.view.length}
               totalCount={pipeline.view.length}
               sortConfig={pipeline.sortConfig}

@@ -21,6 +21,9 @@ export function usePipeline(lastTickDurationRef) {
   const [filters, setFiltersState]        = useState({});
   const [search, setSearchState]          = useState('');
   const [anomalies, setAnomalies]         = useState([]); // rows with signal !== 'nominal'
+  const [filterOptions, setFilterOptions] = useState({
+    status: [], department: [], automation_type: [], country: []
+  });
 
   // KPI counters — direct DOM writes, no state
   const kpiRef = useRef({ rows: 0, robots: 0, savings: 0 });
@@ -73,6 +76,21 @@ export function usePipeline(lastTickDurationRef) {
       kpiRef.current.rows    = tagged.length;
       kpiRef.current.robots  = tagged.reduce((s, r) => s + (r.active_robots || 0), 0);
       kpiRef.current.savings = tagged.reduce((s, r) => s + (r.cumulative_savings || 0), 0);
+      kpiRef.current.savings = tagged.reduce((s, r) => s + (r.cumulative_savings || 0), 0);
+
+      const fOpts = { status: new Set(), department: new Set(), automation_type: new Set(), country: new Set() };
+      rowMapRef.current.forEach(r => {
+        fOpts.status.add(r.status);
+        fOpts.department.add(r.department);
+        fOpts.automation_type.add(r.automation_type);
+        fOpts.country.add(r.country);
+      });
+      setFilterOptions({
+        status: Array.from(fOpts.status).sort(),
+        department: Array.from(fOpts.department).sort(),
+        automation_type: Array.from(fOpts.automation_type).sort(),
+        country: Array.from(fOpts.country).sort(),
+      });
     } else {
       rows.forEach(r => {
         const tagged = tagRow(r);
@@ -160,5 +178,6 @@ export function usePipeline(lastTickDurationRef) {
     anomalies,
     snapshots, replayIdx, seekReplay,
     isReplaying: replayIdx !== null,
+    filterOptions,
   };
 }
