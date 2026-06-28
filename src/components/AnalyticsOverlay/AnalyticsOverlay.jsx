@@ -155,6 +155,7 @@ function ChartPanel({ title, subtitle, children }) {
       borderRadius: '3px',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
+      minHeight: 0,  /* CRITICAL: prevents flex child from growing beyond grid cell */
     }}>
       <div style={{
         padding: '8px 12px',
@@ -174,8 +175,8 @@ function ChartPanel({ title, subtitle, children }) {
           </span>
         )}
       </div>
-      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        <div style={{ position: 'absolute', inset: '12px' }}>
+      <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: '12px', width: 'calc(100% - 24px)', height: 'calc(100% - 24px)' }}>
           {children}
         </div>
       </div>
@@ -432,6 +433,7 @@ export function AnalyticsOverlay({ frozenRows, onClose, pausedAt }) {
         gap: '1px',
         background: '#1e293b', // gap color
         overflow: 'hidden',
+        minHeight: 0, /* CRITICAL: flex:1 child needs this to not overflow */
         padding: '1px',
       }}>
         <ChartPanel title="Status Distribution" subtitle={`${total} rows`}>
