@@ -66,13 +66,19 @@ export default function App() {
     pipeline.setFilters(typeof updater === 'function' ? updater(pipeline.filters) : updater);
   }, [pipeline]);
 
-  if (showHero) return <Hero onEnter={() => setShowHero(false)} />;
+  const debugOverlay = (
+    <div style={{position: 'absolute', top: 0, left: 0, background: 'rgba(0,0,0,0.8)', color: 'red', zIndex: 99999, padding: '10px', fontSize: '14px', fontFamily: 'monospace'}}>
+      DEBUG: View = {pipeline.view.length} | KPI Rows = {pipeline.kpiRef.current?.rows} | Stream = {window.RPAStream ? 'Yes' : 'No'} | Baseline = {window.RPAStream?.getBaseline().length}
+    </div>
+  );
+
+  if (showHero) return <>{debugOverlay}<Hero onEnter={() => setShowHero(false)} /></>;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'#0f172a', overflow:'hidden' }}>
-
-      {/* ── TOP STATUS BAR ── */}
+      {debugOverlay}
       <div style={{
+
         display:'flex', alignItems:'center', gap:'16px',
         padding:'0 12px', height:'32px',
         background:'#020617', borderBottom:'1px solid #1e293b',
