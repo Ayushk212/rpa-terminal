@@ -11,6 +11,26 @@ import {
   roiClass, statusClass,
 } from '../../lib/formatter';
 import { SIGNAL_COLORS } from '../../lib/anomaly';
+import { usePerfMetrics } from '../../hooks/usePerfMetrics';
+
+const getFpsColor = (fps) => {
+  if (fps >= 55) return '#4ade80'; // Green
+  if (fps >= 30) return '#fbbf24'; // Amber
+  return '#ef4444'; // Red
+};
+
+const getHeapColor = (mb) => {
+  if (!mb) return '#475569';
+  if (mb <= 150) return '#4ade80'; // Green
+  if (mb <= 300) return '#fbbf24'; // Amber
+  return '#ef4444'; // Red
+};
+
+const getTickColor = (ms) => {
+  if (ms <= 16) return '#4ade80'; // Green
+  if (ms <= 50) return '#fbbf24'; // Amber
+  return '#ef4444'; // Red
+};
 
 const ROW_H  = 28;
 const BUFFER = 6;
@@ -67,7 +87,7 @@ function flashClass(row) {
   return '';
 }
 
-export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, coldArchival, onRowClick, isPausedRef, onPause }) {
+export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, coldArchival, onRowClick, isPausedRef, onPause, tickDurationRef }) {
   const containerRef  = useRef(null);
   const scrollRef     = useRef(null);
   const rowNodesRef   = useRef([]);
@@ -76,6 +96,8 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
   const rowsRef       = useRef(rows);
   const poolSizeRef   = useRef(0);
   const [toastMsg, setToastMsg] = useState(null);
+
+  const metrics = usePerfMetrics(containerRef, tickDurationRef);
 
   useEffect(() => { rowsRef.current = rows; }, [rows]);
 
@@ -330,17 +352,38 @@ export function VirtualGrid({ rows, sortConfig, onSort, isReplaying, gridRef, co
       {/* ── Footer ── */}
       <div style={{
         fontFamily: '"JetBrains Mono",monospace', fontSize: '9px',
-        color: '#1e293b', padding: '4px 12px',
+        color: '#475569', padding: '5px 12px',
         borderTop: '1px solid #1e293b', background: '#020617',
-        flexShrink: 0, display: 'flex', gap: '16px',
+        flexShrink: 0, display: 'flex', gap: '12px', alignItems: 'center',
+        userSelect: 'none',
       }}>
-        <span style={{ color: '#334155' }}>{rows.length.toLocaleString()} rows</span>
-        <span>
-          DOM pool: {poolSizeRef.current} nodes
-          {coldArchival && <span style={{ color: '#38bdf8', marginLeft: '6px' }}>• ARCHIVING...</span>}
-        </span>
+        <span style={{ color: '#94a3b8' }}>{rows.length.toLocaleString()} rows</span>
+        <span style={{ color: '#1e293b' }}>•</span>
         <span>cols: {COLUMNS.length}</span>
-        {isReplaying && <span style={{ color: '#fbbf24' }}>REPLAY MODE</span>}
+        <span style={{ color: '#1e293b' }}>•</span>
+        <span>DOM pool: {poolSizeRef.current} nodes</span>
+        {coldArchival && (
+          <>
+            <span style={{ color: '#1e293b' }}>•</span>
+            <span style={{ color: '#38bdf8' }}>ARCHIVING...</span>
+          </>
+        )}
+        {isReplaying && (
+          <>
+            <span style={{ color: '#1e293b' }}>•</span>
+            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>REPLAY MODE</span>
+          </>
+        )}
+
+        {/* Integrated Perf HUD metrics */}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <span style={{ color: '#334155' }}>PERF:</span>
+          <span>FPS: <span style={{ color: getFpsColor(metrics.fps), fontWeight: 'bold' }}>{metrics.fps}</span></span>
+          <span style={{ color: '#1e293b' }}>•</span>
+          <span>HEAP: <span style={{ color: getHeapColor(metrics.heapMB), fontWeight: 'bold' }}>{metrics.heapMB ? `${metrics.heapMB}MB` : '--'}</span></span>
+          <span style={{ color: '#1e293b' }}>•</span>
+          <span>TICK: <span style={{ color: getTickColor(metrics.tickDurationMs), fontWeight: 'bold' }}>{metrics.tickDurationMs}ms</span></span>
+        </div>
       </div>
     </div>
   );
