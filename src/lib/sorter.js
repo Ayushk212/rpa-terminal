@@ -15,7 +15,9 @@ export function applySort(rows, sortConfig) {
       let cmp = 0;
 
       if (typeof av === 'number' && typeof bv === 'number') {
-        cmp = av - bv;
+        cmp = (isNaN(av) ? 0 : av) - (isNaN(bv) ? 0 : bv);
+      } else if (!isNaN(parseFloat(av)) && !isNaN(parseFloat(bv))) {
+        cmp = parseFloat(av) - parseFloat(bv);
       } else {
         cmp = String(av ?? '').localeCompare(String(bv ?? ''));
       }
