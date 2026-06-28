@@ -44,7 +44,8 @@ export function DepartmentChart({ rows }) {
     const maxSavings = Math.max(...deptData.map(d => d.savings), 1);
     const rowH       = Math.floor((H - 8) / deptData.length) - 3;
     const labelW     = 72;
-    const barMaxW    = W - labelW - 36;
+    // Leave 70px on the right for text value (40px) + indicator dots (30px)
+    const barMaxW    = W - labelW - 70;
 
     deptData.forEach((d, i) => {
       const y     = 4 + i * (rowH + 3);
@@ -112,7 +113,12 @@ export function DepartmentChart({ rows }) {
         <span>Dept · Savings</span>
         <span style={{color:'#1e293b'}}>● anom</span>
       </div>
-      <canvas ref={canvasRef} style={{flex:1,width:'100%',display:'block'}} />
+      <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: 0 }}>
+        <canvas 
+          ref={canvasRef} 
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} 
+        />
+      </div>
     </div>
   );
 }
